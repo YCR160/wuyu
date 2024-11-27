@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>无语生成器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+
+        select,
+        input {
+            padding: 10px;
+            margin: 20px;
+        }
+
+        .emoji {
+            font-size: 50px;
+            position: absolute;
+            left: 75%;
+            top: 0%;
+        }
+
+        img.icon {
+            display: block;
+            width: 200px;
+            height: 200px;
+        }
+
+        .container {
+            margin-top: 30px;
+            position: relative;
+            display: inline-block;
+        }
+
+        #position-range {
+            width: 200px;
+        }
+
+        #vertical-range {
+            appearance: slider-vertical;
+            height: 200px;
+            position: absolute;
+        }
+
+        #emoji-output {
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- https://github.com/YuehaiTeam/cocogoat/blob/a83bdcf86f7f560b904b6315a90df404f7295c92/loader/loader.scss#L6 -->
+    <noscript>噢我的老天爷，看起来你没有启用神奇的 JavaScript！它实在是太不可思议了，以至于我们的应用没有它完全没办法工作。老伙计，我以上帝的名义发誓，如果你现在启用它，我们的应用会像石头堆里的黄金一样显眼！</noscript>
+    <h1>无语生成器</h1>
+    <label for="icon-select">选择图标:</label>
+    <select id="icon-select"></select>
+
+    <br>
+
+    <label for="text-input">输入文本:</label>
+    <input type="text" id="text-input" placeholder="输入你的文字" />
+
+    <div>
+        <div id="emoji-output"></div>
+        <input type="range" id="vertical-range" name="range" min="-80" max="30" value="0" />
+    </div>
+
+    <input type="range" id="position-range" name="range" min="-30" max="100" value="75" />
+
+    <script>
+        function render() {
+            const selectedIcon = document.getElementById('icon-select').value;
+            const inputText = document.getElementById('text-input').value;
+            const position = document.getElementById('position-range').value;
+            const vertical = document.getElementById('vertical-range').value;
+
+            const imgElement = `<img src="https://api.iconify.design/devicon/${selectedIcon}.svg" alt="${selectedIcon}" class="icon" />`;
+            const sweatElement = `<div id="sweat" class="emoji" style="left: ${position}%; top: ${-Number(vertical)}%;">💧</div>`;
+
+            const container = `<div class="container">${imgElement}${sweatElement}</div>`;
+            const text = `<h2>无语，和你说不下去<br>典型的 ${inputText} 思维</h2>`;
+
+            document.getElementById('emoji-output').innerHTML = container + text;
+        };
+
+        // 获取Devicon图标集并填充下拉菜单
+        fetch('https://api.iconify.design/collection?prefix=devicon')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('icon-select');
+                data.uncategorized.forEach(icon => {
+                    const option = document.createElement('option');
+                    option.value = icon;
+                    option.textContent = icon;
+                    select.appendChild(option);
+                });
+                document.getElementById('icon-select').addEventListener('change', render);
+                document.getElementById('text-input').addEventListener('input', render);
+                document.getElementById('position-range').addEventListener('input', render);
+                document.getElementById('vertical-range').addEventListener('input', render);
+
+                document.getElementById('icon-select').value = 'cplusplus';
+                document.getElementById('text-input').value = 'Rust';
+                render();
+            })
+            .catch(error => console.error('获取图标失败:', error));
+
+    </script>
+</body>
+
+</html>
