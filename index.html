@@ -7,88 +7,132 @@
     <title>无语生成器</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
             text-align: center;
-            margin: 50px;
+            max-width: 300px;
+            margin: 0 auto;
+            background-color: #f9f9f9;
         }
 
         select,
         input {
             padding: 10px;
-            margin: 20px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
 
-        .emoji {
-            font-size: 50px;
-            position: absolute;
-            left: 75%;
-            top: 0%;
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
         }
 
-        img.icon {
-            display: block;
-            width: 200px;
-            height: 200px;
+        button:hover {
+            background-color: #0056b3;
         }
 
-        .container {
-            margin-top: 30px;
-            position: relative;
-            display: inline-block;
-        }
-
-        #position-range {
-            width: 200px;
-        }
-
-        #vertical-range {
-            appearance: slider-vertical;
-            height: 200px;
-            position: absolute;
-        }
-
-        #emoji-output {
-            display: inline-block;
+        #emoji-canvas {
+            max-width: 100%;
+            margin: 20px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
     </style>
 </head>
 
 <body>
-    <!-- https://github.com/YuehaiTeam/cocogoat/blob/a83bdcf86f7f560b904b6315a90df404f7295c92/loader/loader.scss#L6 -->
-    <noscript>噢我的老天爷，看起来你没有启用神奇的 JavaScript！它实在是太不可思议了，以至于我们的应用没有它完全没办法工作。老伙计，我以上帝的名义发誓，如果你现在启用它，我们的应用会像石头堆里的黄金一样显眼！</noscript>
+    <noscript>
+        <!-- https://github.com/YuehaiTeam/cocogoat/blob/a83bdcf86f7f560b904b6315a90df404f7295c92/loader/loader.scss#L6 -->
+        <p>噢我的老天爷，看起来你没有启用神奇的 JavaScript！它实在是太不可思议了，以至于我们的应用没有它完全没办法工作。老伙计，我以上帝的名义发誓，如果你现在启用它，我们的应用会像石头堆里的黄金一样显眼！</p>
+    </noscript>
     <h1>无语生成器</h1>
-    <label for="icon-select">选择图标:</label>
-    <select id="icon-select"></select>
-
-    <br>
-
-    <label for="text-input">输入文本:</label>
-    <input type="text" id="text-input" placeholder="输入你的文字" />
-
     <div>
-        <div id="emoji-output"></div>
-        <input type="range" id="vertical-range" name="range" min="-80" max="30" value="0" />
+        <label for="icon-select">选择图标:</label>
+        <select id="icon-select"></select>
     </div>
-
-    <input type="range" id="position-range" name="range" min="-30" max="100" value="75" />
+    <div>
+        <label for="text-input">输入文本:</label>
+        <input type="text" id="text-input" />
+    </div>
+    <canvas id="emoji-canvas" width="1200" height="1600"></canvas>
+    <button id="convert-button">下载</button>
 
     <script>
-        function render() {
+        const canvas = document.getElementById('emoji-canvas');
+        const ctx = canvas.getContext('2d');
+        let isDragging = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentX = canvas.width * 0.7;
+        let currentY = canvas.height * 0.25;
+
+        function render(x = null, y = null) {
             const selectedIcon = document.getElementById('icon-select').value;
             const inputText = document.getElementById('text-input').value;
-            const position = document.getElementById('position-range').value;
-            const vertical = document.getElementById('vertical-range').value;
 
-            const imgElement = `<img src="https://api.iconify.design/devicon/${selectedIcon}.svg" alt="${selectedIcon}" class="icon" />`;
-            const sweatElement = `<div id="sweat" class="emoji" style="left: ${position}%; top: ${-Number(vertical)}%;">💧</div>`;
+            const text1 = '无语，和你说不下去';
+            const text2 = `典型的 ${inputText} 思维`;
 
-            const container = `<div class="container">${imgElement}${sweatElement}</div>`;
-            const text = `<h2>无语，和你说不下去<br>典型的 ${inputText} 思维</h2>`;
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = `https://api.iconify.design/devicon/${selectedIcon}.svg`;
+            img.onload = () => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            document.getElementById('emoji-output').innerHTML = container + text;
-        };
+                const imgWidth = canvas.width * 0.9;
+                const imgHeight = imgWidth * (img.height / img.width);
+                const imgX = (canvas.width - imgWidth) / 2;
+                const imgY = canvas.height * 0.05;
+                ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
 
-        // 获取Devicon图标集并填充下拉菜单
+                ctx.fillStyle = 'black';
+
+                const emojiSize = canvas.width * 0.25;
+                ctx.font = `${emojiSize}px sans-serif`;
+                const drawX = x !== null ? x : canvas.width * 0.7;
+                const drawY = y !== null ? y : canvas.height * 0.25;
+                ctx.fillText('💧', drawX, drawY);
+
+                const fontSize = canvas.width * 0.1;
+                ctx.font = `${fontSize}px sans-serif`;
+                ctx.fillText(text1, (canvas.width - text1.length * fontSize) / 2, canvas.height - fontSize * 2);
+                ctx.fillText(text2, (canvas.width - text1.length * fontSize) / 2, canvas.height - fontSize * 0.7);
+            };
+        }
+
+        function startDragging(x, y) {
+            isDragging = true;
+            lastX = x;
+            lastY = y;
+        }
+
+        function continueDragging(x, y) {
+            if (isDragging) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const deltaX = (x - lastX) * scaleX;
+                const deltaY = (y - lastY) * scaleY;
+                lastX = x;
+                lastY = y;
+                currentX = Math.min(Math.max(currentX + deltaX, -25), canvas.width - 25);
+                currentY = Math.min(Math.max(currentY + deltaY, 0), canvas.height + 25);
+                render(currentX, currentY);
+            }
+        }
+
+        function stopDragging() {
+            isDragging = false;
+        }
+
         fetch('https://api.iconify.design/collection?prefix=devicon')
             .then(response => response.json())
             .then(data => {
@@ -99,17 +143,52 @@
                     option.textContent = icon;
                     select.appendChild(option);
                 });
-                document.getElementById('icon-select').addEventListener('change', render);
-                document.getElementById('text-input').addEventListener('input', render);
-                document.getElementById('position-range').addEventListener('input', render);
-                document.getElementById('vertical-range').addEventListener('input', render);
-
+                document.getElementById('icon-select').addEventListener('change', () => render());
+                document.getElementById('text-input').addEventListener('input', () => render());
                 document.getElementById('icon-select').value = 'cplusplus';
                 document.getElementById('text-input').value = 'Rust';
                 render();
             })
-            .catch(error => console.error('获取图标失败:', error));
+            .catch(error => {
+                console.error('获取图标失败:', error);
+                window.alert('获取图标失败，请刷新页面重试！');
+            });
 
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            startDragging(e.clientX - rect.left, e.clientY - rect.top);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            continueDragging(e.clientX - rect.left, e.clientY - rect.top);
+        });
+
+        canvas.addEventListener('mouseup', stopDragging);
+        canvas.addEventListener('mouseleave', stopDragging);
+
+        canvas.addEventListener('touchstart', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            startDragging(touch.clientX - rect.left, touch.clientY - rect.top);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            continueDragging(touch.clientX - rect.left, touch.clientY - rect.top);
+        });
+
+        canvas.addEventListener('touchend', stopDragging);
+        canvas.addEventListener('touchcancel', stopDragging);
+
+        document.getElementById('convert-button').addEventListener('click', () => {
+            const dataURL = canvas.toDataURL('image/png');
+            const newWindow = window.open();
+            newWindow.document.write(`<img src="${dataURL}" />`);
+        });
     </script>
 </body>
 
