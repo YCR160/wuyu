@@ -44,6 +44,11 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+
+        #tip {
+            font-size: small;
+            color: #666;
+        }
     </style>
 </head>
 
@@ -53,9 +58,11 @@
         <p>噢我的老天爷，看起来你没有启用神奇的 JavaScript！它实在是太不可思议了，以至于我们的应用没有它完全没办法工作。老伙计，我以上帝的名义发誓，如果你现在启用它，我们的应用会像石头堆里的黄金一样显眼！</p>
     </noscript>
     <h1>无语生成器</h1>
+    <p id="tip">拖动改变💧位置</p>
     <div>
-        <label for="icon-select">选择图标:</label>
-        <select id="icon-select"></select>
+        <label for="icon-input">选择图标:</label>
+        <input list="icon-list" id="icon-input" />
+        <datalist id="icon-list"></datalist>
     </div>
     <div>
         <label for="text-input">输入文本:</label>
@@ -72,40 +79,49 @@
         let lastY = 0;
         let currentX = canvas.width * 0.7;
         let currentY = canvas.height * 0.25;
+        let icons = [];
+        let currentIconSrc = '';
 
         function render(x = null, y = null) {
-            const selectedIcon = document.getElementById('icon-select').value;
+            const selectedIcon = document.getElementById('icon-input').value;
             const inputText = document.getElementById('text-input').value;
 
+            if (icons.includes(selectedIcon)) {
+                currentIconSrc = `https://api.iconify.design/devicon/${selectedIcon}.svg`;
+            }
             const text1 = '无语，和你说不下去';
             const text2 = `典型的 ${inputText} 思维`;
 
             const img = new Image();
             img.crossOrigin = "anonymous";
-            img.src = `https://api.iconify.design/devicon/${selectedIcon}.svg`;
             img.onload = () => {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                const imgWidth = canvas.width * 0.9;
-                const imgHeight = imgWidth * (img.height / img.width);
-                const imgX = (canvas.width - imgWidth) / 2;
-                const imgY = canvas.height * 0.05;
-                ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
-
-                ctx.fillStyle = 'black';
-
-                const emojiSize = canvas.width * 0.25;
-                ctx.font = `${emojiSize}px sans-serif`;
-                const drawX = x !== null ? x : canvas.width * 0.7;
-                const drawY = y !== null ? y : canvas.height * 0.25;
-                ctx.fillText('💧', drawX, drawY);
-
-                const fontSize = canvas.width * 0.1;
-                ctx.font = `${fontSize}px sans-serif`;
-                ctx.fillText(text1, (canvas.width - text1.length * fontSize) / 2, canvas.height - fontSize * 2);
-                ctx.fillText(text2, (canvas.width - text1.length * fontSize) / 2, canvas.height - fontSize * 0.7);
+                drawCanvas(img, x, y, text1, text2);
             };
+            img.src = currentIconSrc;
+        }
+
+        function drawCanvas(img, x, y, text1, text2) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const imgWidth = canvas.width * 0.8;
+            const imgHeight = imgWidth * (img.height / img.width);
+            const imgX = (canvas.width - imgWidth) / 2;
+            const imgY = canvas.height * 0.1;
+            ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+
+            ctx.fillStyle = 'black';
+
+            const emojiSize = canvas.width * 0.25;
+            ctx.font = `${emojiSize}px sans-serif`;
+            const drawX = x !== null ? x : canvas.width * 0.6;
+            const drawY = y !== null ? y : canvas.height * 0.3;
+            ctx.fillText('💧', drawX, drawY);
+
+            const fontSize = canvas.width * 0.1;
+            ctx.font = `${fontSize}px sans-serif`;
+            ctx.fillText(text1, (canvas.width - text1.length * fontSize) / 2, canvas.height - fontSize * 2);
+            ctx.fillText(text2, (canvas.width - text1.length * fontSize) / 2, canvas.height - fontSize * 0.7);
         }
 
         function startDragging(x, y) {
@@ -123,8 +139,8 @@
                 const deltaY = (y - lastY) * scaleY;
                 lastX = x;
                 lastY = y;
-                currentX = Math.min(Math.max(currentX + deltaX, -25), canvas.width - 25);
-                currentY = Math.min(Math.max(currentY + deltaY, 0), canvas.height + 25);
+                currentX = Math.min(Math.max(currentX + deltaX, 0), canvas.width * 0.75);
+                currentY = Math.min(Math.max(currentY + deltaY, canvas.width * 0.25), canvas.height);
                 render(currentX, currentY);
             }
         }
@@ -136,16 +152,16 @@
         fetch('https://api.iconify.design/collection?prefix=devicon')
             .then(response => response.json())
             .then(data => {
-                const select = document.getElementById('icon-select');
-                data.uncategorized.forEach(icon => {
+                icons = data.uncategorized;
+                const datalist = document.getElementById('icon-list');
+                icons.forEach(icon => {
                     const option = document.createElement('option');
                     option.value = icon;
-                    option.textContent = icon;
-                    select.appendChild(option);
+                    datalist.appendChild(option);
                 });
-                document.getElementById('icon-select').addEventListener('change', () => render());
+                document.getElementById('icon-input').addEventListener('input', () => render());
                 document.getElementById('text-input').addEventListener('input', () => render());
-                document.getElementById('icon-select').value = 'cplusplus';
+                document.getElementById('icon-input').value = 'cplusplus';
                 document.getElementById('text-input').value = 'Rust';
                 render();
             })
@@ -153,7 +169,6 @@
                 console.error('获取图标失败:', error);
                 window.alert('获取图标失败，请刷新页面重试！');
             });
-
 
         canvas.addEventListener('mousedown', (e) => {
             const rect = canvas.getBoundingClientRect();
