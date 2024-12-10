@@ -97,7 +97,7 @@
             img.onload = () => {
                 drawCanvas(img, x, y, text1, text2);
             };
-            img.src = currentIconSrc;
+            img.src = currentIconSrc || 'https://api.iconify.design/devicon/cplusplus.svg';
         }
 
         function drawCanvas(img, x, y, text1, text2) {
@@ -161,7 +161,6 @@
                 });
                 document.getElementById('icon-input').addEventListener('input', () => render());
                 document.getElementById('text-input').addEventListener('input', () => render());
-                document.getElementById('icon-input').value = 'cplusplus';
                 document.getElementById('text-input').value = 'Rust';
                 render();
             })
